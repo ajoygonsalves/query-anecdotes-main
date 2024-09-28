@@ -8,8 +8,10 @@ import {
 import AnecdoteForm from "./components/AnecdoteForm";
 import Notification from "./components/Notification";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCreateNotification } from "./context/NotificationContext";
 
 const App = () => {
+  const createNotification = useCreateNotification();
   const handleVote = (id) => {
     likeAnecdoteMutation.mutate(id);
   };
@@ -33,9 +35,10 @@ const App = () => {
 
   const removeAnecdoteMutation = useMutation({
     mutationFn: removeAnecdote,
-    onSuccess: (removed) => {
-      const anecdotes = queryClient.getQueryData(["anecdotes"]) || [];
+    onSuccess: (e) => {
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+
+      createNotification(`Anecdote removed`, 2000);
     },
     onError: (error) => {
       console.error("Error removing anecdote:", error.message);
@@ -45,8 +48,8 @@ const App = () => {
   const likeAnecdoteMutation = useMutation({
     mutationFn: likeAnecdote,
     onSuccess: (likedAnecdote) => {
-      const anecdotes = queryClient.getQueryData(["anecdotes"]) || [];
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+      createNotification(`Anecdote liked: ${likedAnecdote.content}`, 2000);
     },
     onError: (error) => {
       console.error("Error liking anecdote:", error.message);
