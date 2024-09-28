@@ -1,12 +1,21 @@
 import { useEffect } from "react";
-import { getAnecdotes } from "../anecdotesService";
+import {
+  createAnecdote,
+  getAnecdotes,
+  likeAnecdote,
+  removeAnecdote,
+} from "../anecdotesService";
 import AnecdoteForm from "./components/AnecdoteForm";
 import Notification from "./components/Notification";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const App = () => {
-  const handleVote = (anecdote) => {
-    console.log("vote");
+  const handleVote = (id) => {
+    likeAnecdoteMutation.mutate(id);
+  };
+
+  const handleDelete = (id) => {
+    removeAnecdoteMutation.mutate(id);
   };
 
   const queryClient = useQueryClient();
@@ -22,13 +31,27 @@ const App = () => {
     },
   });
 
-  // const anecdotes = [
-  //   {
-  //     content: "If it hurts, do it more often",
-  //     id: "47145",
-  //     votes: 0,
-  //   },
-  // ];
+  const removeAnecdoteMutation = useMutation({
+    mutationFn: removeAnecdote,
+    onSuccess: (removed) => {
+      const anecdotes = queryClient.getQueryData(["anecdotes"]) || [];
+      queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+    },
+    onError: (error) => {
+      console.error("Error removing anecdote:", error.message);
+    },
+  });
+
+  const likeAnecdoteMutation = useMutation({
+    mutationFn: likeAnecdote,
+    onSuccess: (likedAnecdote) => {
+      const anecdotes = queryClient.getQueryData(["anecdotes"]) || [];
+      queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
+    },
+    onError: (error) => {
+      console.error("Error liking anecdote:", error.message);
+    },
+  });
 
   if (anecdotes.isError) {
     return (
@@ -52,15 +75,21 @@ const App = () => {
         <Notification />
         <AnecdoteForm />
 
-        {anecdotes.data.map((anecdote) => (
-          <div key={anecdote.id}>
-            <div>{anecdote.content}</div>
-            <div>
-              has {anecdote.votes}
-              <button onClick={() => handleVote(anecdote)}>vote</button>
+        {anecdotes.data &&
+          anecdotes.data.map((anecdote) => (
+            <div key={anecdote.id}>
+              <div>{anecdote.content}</div>
+              <div>
+                has {anecdote.votes}
+                <button onClick={() => handleVote(anecdote.id)}>vote</button>
+              </div>
+              <div>
+                <button onClick={() => handleDelete(anecdote.id)}>
+                  Delete
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     );
   }
