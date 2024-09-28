@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useCreateNotification } from "../context/NotificationContext";
 
 const AnecdoteForm = () => {
-  const [error, setError] = useState(null);
-
   const createNotification = useCreateNotification();
 
   const queryClient = useQueryClient();
@@ -15,11 +13,9 @@ const AnecdoteForm = () => {
     onSuccess: (anecdote) => {
       queryClient.invalidateQueries({ queryKey: ["anecdotes"] });
       createNotification(`Anecdote created: ${anecdote.content}`);
-      setError(null);
     },
     onError: (error) => {
-      console.error("Error creating anecdote:", error.message);
-      setError(error.message);
+      createNotification(`Error creating anecdote: ${error.message}`);
     },
   });
 
@@ -27,17 +23,12 @@ const AnecdoteForm = () => {
     event.preventDefault();
     const content = event.target.anecdote.value;
     event.target.anecdote.value = "";
-    if (content.length >= 5) {
-      newAnecdoteMutation.mutate(content);
-    } else {
-      console.error("Anecdote must be at least 5 characters long");
-    }
+    newAnecdoteMutation.mutate(content);
   };
 
   return (
     <div>
       <h3>create new</h3>
-      {error && <div style={{ color: "red" }}>{error}</div>}
       <form onSubmit={onCreate}>
         <input name="anecdote" />
         <button type="submit">create</button>

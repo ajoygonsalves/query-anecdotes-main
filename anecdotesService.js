@@ -27,12 +27,10 @@ export const getAnecdotes = async () => {
 };
 
 export const createAnecdote = async (content) => {
+  if (content.trim().length <= 5) {
+    throw new Error("Bummer! Anecdote too short, must have length 5 or more.");
+  }
   try {
-    if (content.trim().length <= 5) {
-      return response.status(400).json({
-        error: "too short anecdote, must have length 5 or more",
-      });
-    }
     const res = await axios.post(baseUrl, {
       content,
       id: createId(),
